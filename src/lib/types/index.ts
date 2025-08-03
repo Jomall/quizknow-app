@@ -2,6 +2,8 @@ export interface User {
   id: string;
   email: string;
   name: string;
+  contactInfo?: string; // New optional contact information field
+  password?: string; // Password field for authentication
   role: 'student' | 'instructor' | 'admin';
   enrolledCourses: string[];
   createdCourses: string[];

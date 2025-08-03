@@ -18,6 +18,7 @@ export function AuthForm({ mode }: AuthFormProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
+  const [contactInfo, setContactInfo] = useState('');  // New state for contact info
   const [role, setRole] = useState<'student' | 'instructor'>('student');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -36,6 +37,12 @@ export function AuthForm({ mode }: AuthFormProps) {
       if (mode === 'login') {
         const user = users.find(u => u.email === email);
         if (!user) {
+          setError('Invalid email or password');
+          return;
+        }
+        
+        // Check password
+        if (user.password !== password) {
           setError('Invalid email or password');
           return;
         }
@@ -61,6 +68,8 @@ export function AuthForm({ mode }: AuthFormProps) {
             id: Date.now().toString(),
             email,
             name,
+            contactInfo, // Add contact info to user object
+            password, // Add password to user object
             role,
             enrolledCourses: [],
             createdCourses: [],
@@ -83,6 +92,7 @@ export function AuthForm({ mode }: AuthFormProps) {
           // Reset form
           setEmail('');
           setName('');
+          setContactInfo('');
           setPassword('');
           setRole('student');
         } else {
@@ -91,6 +101,8 @@ export function AuthForm({ mode }: AuthFormProps) {
             id: Date.now().toString(),
             email,
             name,
+            contactInfo, // Add contact info to user object
+            password, // Add password to user object
             role,
             enrolledCourses: [],
             createdCourses: [],
@@ -148,17 +160,30 @@ export function AuthForm({ mode }: AuthFormProps) {
           </div>
 
           {mode === 'register' && (
-            <div className="space-y-2">
-              <Label htmlFor="name">Full Name</Label>
-              <Input
-                id="name"
-                type="text"
-                placeholder="John Doe"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-              />
-            </div>
+            <>
+              <div className="space-y-2">
+                <Label htmlFor="name">Full Name</Label>
+                <Input
+                  id="name"
+                  type="text"
+                  placeholder="John Doe"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="contactInfo">Contact Information</Label>
+                <Input
+                  id="contactInfo"
+                  type="text"
+                  placeholder="Phone or other contact info"
+                  value={contactInfo}
+                  onChange={(e) => setContactInfo(e.target.value)}
+                  required
+                />
+              </div>
+            </>
           )}
 
           <div className="space-y-2">

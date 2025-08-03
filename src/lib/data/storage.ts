@@ -6,6 +6,7 @@ const STORAGE_KEYS = {
   COURSES: 'tec_net_solutions_quizknow_courses',
   CURRENT_USER: 'tec_net_solutions_quizknow_current_user',
   PENDING_STUDENTS: 'tec_net_solutions_quizknow_pending_students',
+  RESET_TOKENS: 'tec_net_solutions_quizknow_reset_tokens',
 };
 
 // Add this interface for pending students
@@ -183,6 +184,63 @@ export const storage = {
     };
   },
 
+  // Password reset token management
+  saveResetToken(email: string, token: string) {
+    if (typeof window === 'undefined') return;
+    const tokens = this.getResetTokens();
+    tokens[email] = {
+      token,
+      createdAt: new Date().getTime()
+    };
+    localStorage.setItem(STORAGE_KEYS.RESET_TOKENS, JSON.stringify(tokens));
+  },
+
+  getResetTokens() {
+    if (typeof window === 'undefined') return {};
+    const tokens = localStorage.getItem(STORAGE_KEYS.RESET_TOKENS);
+    return tokens ? JSON.parse(tokens) : {};
+  },
+
+  validateResetToken(email: string, token: string): boolean {
+    if (typeof window === 'undefined') return false;
+    const tokens = this.getResetTokens();
+    const tokenData = tokens[email];
+    
+    if (!tokenData) return false;
+    
+    // Check if token is expired (30 minutes)
+    const now = new Date().getTime();
+    const tokenAge = now - tokenData.createdAt;
+    const thirtyMinutes = 30 * 60 * 1000; // 30 minutes in milliseconds
+    
+    if (tokenAge > thirtyMinutes) {
+      // Remove expired token
+      delete tokens[email];
+      localStorage.setItem(STORAGE_KEYS.RESET_TOKENS, JSON.stringify(tokens));
+      return false;
+    }
+    
+    return tokenData.token === token;
+  },
+
+  resetPassword(email: string, newPassword: string): boolean {
+    const users = this.getUsers();
+    const userIndex = users.findIndex(u => u.email === email);
+    
+    if (userIndex === -1) return false;
+    
+    // Update user's password (in a real app, this should be hashed)
+    users[userIndex].password = newPassword;
+    this.saveUsers(users);
+    
+    // Remove used token
+    const tokens = this.getResetTokens();
+    delete tokens[email];
+    localStorage.setItem(STORAGE_KEYS.RESET_TOKENS, JSON.stringify(tokens));
+    
+    return true;
+  },
+
   // Initialize with demo data
   initializeDemoData: () => {
     if (typeof window === 'undefined') return;
@@ -194,6 +252,7 @@ export const storage = {
           id: '1',
           email: 'student@lms.com',
           name: 'Demo Student',
+          password: 'student123',
           role: 'student',
           enrolledCourses: ['1', '2'],
           createdCourses: [],
@@ -203,15 +262,18 @@ export const storage = {
           id: '2',
           email: 'instructor@lms.com',
           name: 'Demo Instructor',
+          password: 'instructor123',
           role: 'instructor',
           enrolledCourses: [],
           createdCourses: ['1', '2'],
           createdAt: new Date(),
+          isApproved: true, // Updated to true for immediate login
         },
         {
           id: '3',
           email: 'admin@lms.com',
           name: 'Demo Admin',
+          password: 'admin123',
           role: 'admin',
           enrolledCourses: [],
           createdCourses: [],
